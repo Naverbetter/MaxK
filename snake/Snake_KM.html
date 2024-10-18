@@ -36,29 +36,33 @@
 </head>
 <body>
     <div id="score">Score: <span>0</span></div>
-    <canvas id="gameCanvas" width="800" height="800"></canvas>
+    <canvas id="gameCanvas"></canvas>
     <script>
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
         const scoreDisplay = document.getElementById("score").querySelector("span");
 
+        // Determine the canvas size based on device type
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const canvasSize = isMobile ? Math.min(window.innerWidth * 0.9, window.innerHeight * 0.9) : 800;
+
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+
         const boxSize = 20; // Size of each box (both for snake segments and food)
-        let snake = [{ x: 400, y: 400 }]; // Initial position of the snake (array of segments)
+        let snake = [{ x: canvasSize / 2, y: canvasSize / 2 }]; // Initial position of the snake (array of segments)
         let direction = "RIGHT"; // Initial direction of movement
         let food = generateFoodPosition(); // Generate initial food position
         let score = 0; // Initial score
         let changingDirection = false; // Prevent multiple direction changes per game tick
 
-        // Listen for keypress events to change the direction of the snake
         document.addEventListener("keydown", changeDirection);
-        // Listen for touch events to change the direction on mobile devices
         canvas.addEventListener("touchstart", handleTouch);
 
         function changeDirection(event) {
             if (changingDirection) return;
             changingDirection = true;
             const key = event.keyCode;
-            // Update direction based on arrow keys, ensuring the snake cannot reverse
             if (key === 37 && direction !== "RIGHT") {
                 direction = "LEFT";
             } else if (key === 38 && direction !== "DOWN") {
@@ -91,16 +95,13 @@
             const deltaX = touchEndX - touchStartX;
             const deltaY = touchEndY - touchStartY;
 
-            // Determine the direction based on the touch movement
             if (Math.abs(deltaX) > Math.abs(deltaY)) {
-                // Horizontal movement
                 if (deltaX > 0 && direction !== "LEFT") {
                     direction = "RIGHT";
                 } else if (deltaX < 0 && direction !== "RIGHT") {
                     direction = "LEFT";
                 }
             } else {
-                // Vertical movement
                 if (deltaY > 0 && direction !== "UP") {
                     direction = "DOWN";
                 } else if (deltaY < 0 && direction !== "DOWN") {
@@ -108,43 +109,33 @@
                 }
             }
 
-            // Remove touchend listener after determining direction
             canvas.removeEventListener("touchend", handleTouchEnd);
         }
 
         function drawGame() {
-            changingDirection = false; // Allow direction change in the next tick
-
-            // Clear the canvas for redrawing
+            changingDirection = false;
             ctx.fillStyle = "black";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw each segment of the snake
             for (let i = 0; i < snake.length; i++) {
-                ctx.fillStyle = i === 0 ? "lightgreen" : "green"; // Head is light green, body is green
+                ctx.fillStyle = i === 0 ? "lightgreen" : "green";
                 ctx.fillRect(snake[i].x, snake[i].y, boxSize, boxSize);
             }
 
-            // Draw the food
             ctx.fillStyle = "red";
             ctx.fillRect(food.x, food.y, boxSize, boxSize);
 
-            // Get the current position of the snake's head
             let snakeX = snake[0].x;
             let snakeY = snake[0].y;
 
-            // Update the position of the head based on the current direction
             if (direction === "LEFT") snakeX -= boxSize;
             if (direction === "UP") snakeY -= boxSize;
             if (direction === "RIGHT") snakeX += boxSize;
             if (direction === "DOWN") snakeY += boxSize;
 
-            // Create the new head position
             let newHead = { x: snakeX, y: snakeY };
 
-            // Check for collisions (with wall or self)
             if (snakeX < 0 || snakeX >= canvas.width || snakeY < 0 || snakeY >= canvas.height || collision(newHead, snake)) {
-                // End the game if a collision occurs
                 clearInterval(game);
                 let message = `${score}점 입니다.`;
                 if (score <= 100) {
@@ -160,56 +151,46 @@
                 return;
             }
 
-            // Check if the snake has eaten the food
             if (snakeX === food.x && snakeY === food.y) {
-                // Generate a new food position
                 food = generateFoodPosition();
-                // Increase the score by 10
                 score += 10;
-                // Update score display
                 scoreDisplay.textContent = score;
             } else {
-                // Remove the last segment of the snake (unless it ate food)
                 snake.pop();
             }
 
-            // Add the new head to the beginning of the snake
             snake.unshift(newHead);
         }
 
-        // Check if the snake's head collides with any part of the body
         function collision(head, array) {
             for (let i = 0; i < array.length; i++) {
                 if (head.x === array[i].x && head.y === array[i].y) {
-                    return true; // Collision detected
+                    return true;
                 }
             }
-            return false; // No collision
+            return false;
         }
 
-        // Generate a new random position for the food
         function generateFoodPosition() {
             let position;
             do {
                 position = {
-                    x: Math.floor(Math.random() * (canvas.width / boxSize)) * boxSize, // Random x position within bounds
-                    y: Math.floor(Math.random() * (canvas.height / boxSize)) * boxSize  // Random y position within bounds
+                    x: Math.floor(Math.random() * (canvas.width / boxSize)) * boxSize,
+                    y: Math.floor(Math.random() * (canvas.height / boxSize)) * boxSize
                 };
-            } while (collision(position, snake)); // Ensure food does not appear on the snake
+            } while (collision(position, snake));
             return position;
         }
 
-        // Restart the game by resetting variables and starting the game loop again
         function restartGame() {
-            snake = [{ x: 400, y: 400 }]; // Reset snake to initial position
-            direction = "RIGHT"; // Reset direction
-            food = generateFoodPosition(); // Generate new food position
-            score = 0; // Reset score
-            scoreDisplay.textContent = "0"; // Update score display
-            game = setInterval(drawGame, 100); // Restart game loop
+            snake = [{ x: canvasSize / 2, y: canvasSize / 2 }];
+            direction = "RIGHT";
+            food = generateFoodPosition();
+            score = 0;
+            scoreDisplay.textContent = "0";
+            game = setInterval(drawGame, 100);
         }
 
-        // Start the game loop, running drawGame every 100 milliseconds
         let game = setInterval(drawGame, 100);
     </script>
 </body>
