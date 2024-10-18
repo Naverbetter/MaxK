@@ -74,27 +74,17 @@
             }
         }
 
-        let touchStartX = 0;
-        let touchStartY = 0;
-
         function handleTouch(event) {
             const touch = event.touches[0];
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
+            const touchX = touch.clientX;
+            const touchY = touch.clientY;
+            const centerX = canvas.getBoundingClientRect().left + canvas.width / 2;
+            const centerY = canvas.getBoundingClientRect().top + canvas.height / 2;
 
-            canvas.addEventListener("touchend", handleTouchEnd);
-        }
+            const deltaX = touchX - centerX;
+            const deltaY = touchY - centerY;
 
-        function handleTouchEnd(event) {
-            if (changingDirection) return;
-            changingDirection = true;
-            const touch = event.changedTouches[0];
-            const touchEndX = touch.clientX;
-            const touchEndY = touch.clientY;
-
-            const deltaX = touchEndX - touchStartX;
-            const deltaY = touchEndY - touchStartY;
-
+            // Determine the direction based on where the touch is relative to the snake's position
             if (Math.abs(deltaX) > Math.abs(deltaY)) {
                 if (deltaX > 0 && direction !== "LEFT") {
                     direction = "RIGHT";
@@ -108,8 +98,6 @@
                     direction = "UP";
                 }
             }
-
-            canvas.removeEventListener("touchend", handleTouchEnd);
         }
 
         function drawGame() {
